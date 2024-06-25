@@ -23,18 +23,30 @@ class LibExampleC:
         return self.lib.libexample_iter(val)
 
 
-def elapsed(func, label="default"):
-    def wrap(*args, **kwargs):
-        start = time.time()
-        r1 = func(*args, **kwargs)
-        elapsedms = (time.time() - start)*1000
-        print(f"{label}: elapsed {elapsedms}ms")
-        return r1
-    return wrap
+def elapsed(label="default"):
+    def w0(func):
+        def wrap(*args, **kwargs):
+            start = time.time()
+            r1 = func(*args, **kwargs)
+            elapsedms = (time.time() - start)*1000
+            print(f"{label}: elapsed {elapsedms}ms")
+            return r1
+        return wrap
+    return w0
 
 
-def test_wrapped(lib, val) -> int:
-    return lib.iter(val)
+@elapsed("test C")
+def test_c(lib, val, exp):
+    r = lib.iter(val)
+    if r != exp:
+        print(f"exp: {exp}, got: {r}")
+
+
+@elapsed("test Python")
+def test_py(lib, val, exp):
+    r = lib.iter(val)
+    if r != exp:
+        print(f"exp: {exp}, got: {r}")
 
 
 def main():
@@ -43,13 +55,8 @@ def main():
     val = 1_000_000_000
     exp = 500000000500000000
 
-    r = elapsed(test_wrapped, label="C")(libex_c, val)
-    if r != exp:
-        print(f"exp: {exp}, got: {r}")
-
-    r = elapsed(test_wrapped, label="Python")(libex_py, val)
-    if r != exp:
-        print(f"exp: {exp}, got: {r}")
+    test_c(libex_c, val, exp)
+    test_py(libex_py, val, exp)
 
 
 if __name__ == "__main__":
